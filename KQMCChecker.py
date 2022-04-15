@@ -107,10 +107,10 @@ text_to_stat = {
     "anemo%": s.anemo,
     "geo%": s.geo,
     "dendro%": s.dendro,
-    "physical%": s.physical,
+    "phys%": s.physical,
 }
 
-comment_regex = re.compile("#.*$")
+comment_regex = re.compile("#.*$", re.MULTILINE)
 add_stats_regex = re.compile("([a-zA-Z]+) +add +stats +")
 stat_regex = re.compile("([a-zA-Z%]+) *= *(\d*\.?\d*)")
 set_regex = re.compile(

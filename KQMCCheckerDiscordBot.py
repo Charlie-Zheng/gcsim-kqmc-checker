@@ -11,14 +11,15 @@ from KQMCChecker import check_config
 
 def get_config_from_url(url:str):
     try:
-        url = url.replace("https://www.gcsim.app/viewer/share/", "https://viewer.gcsim.workers.dev/")
+        url = url.replace("www.gcsim.app/viewer/share/", "viewer.gcsim.workers.dev/")
         r= requests.get(url)
         raw_data:str = json.loads(r.content)['data']
         compressed = base64.b64decode(raw_data)
         data = gzip.decompress(compressed)
         data = json.loads(data)
         return data['config_file']
-    except:
+    except Exception as e:
+        print(e)
         return None
 
 TOKEN = os.getenv('DISCORD_TOKEN')

@@ -116,6 +116,7 @@ stat_regex = re.compile("([a-zA-Z%]+) *= *(\d*\.?\d*)")
 set_regex = re.compile(
     '([a-zA-Z]+) +add +set *= *"([a-zA-Z]*)" +count *= *(\d+)')
 
+PRINT_ONLY_FAILS = False
 
 def preprocess_file(file_content: str):
     file_content, _ = re.subn(comment_regex, "", file_content)
@@ -266,13 +267,67 @@ parser.add_argument('--print-only-failures', action='store_true', default=False,
 parser.add_argument('--kurt', action='store_true', default=False,
                     help='also check cons and weapon (not implemented yet)')
 
+def check_config(config:str, name="Unknown name"):
+    lines = preprocess_file(config)
+    char_stats = parse_lines(lines)
+    all_valid = True
+    msg = ""
+    for char in char_stats.keys():
+        possible_mains = 0
+        try:
+            possible_mains = guess_main_stats(char_stats[char])
+        except NotImplementedError:
+            debug(f"Found 4* set on character {char}. Skipping this character. Please confirm manually")
+            msg += f"\tFound 4* set on {char}. Skipping this character. Please confirm manually\n"
+            continue
+        if len(possible_mains) == 0:
+            debug(f"Did not find 5 possible main stats for {char}")
+            msg += f"\tDid not find 5 possible main stats for {char}\n"
+            all_valid = False
+            continue
+        debug(
+            f"For character {char} found possible main stats combinations: ")
+
+        char_is_valid = False
+        for guess in possible_mains:
+            debug(f"\t{guess}")
+            if char_is_valid:
+                debug("\t\tSkipping because a valid KQMC main/substat distribution has been found already")
+                continue
+            try:
+                subs = get_subs_from_guess(char_stats[char], guess)
+                debug(f"\t\t{subs=}")
+            except ValueError as e:
+                debug(
+                    f"\t\tThis main stat guess was invalid: {e}")
+                continue
+            check, kqmc_msg = checkKQMC(guess, subs)
+            char_is_valid = char_is_valid or check
+            if not check:
+                debug(f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
+
+        if not char_is_valid:
+            debug(f"{char} isn't valid KQMC mains/substats")
+            msg += f"\t{char} isn't valid KQMC mains/substats\n"
+        all_valid = all_valid and char_is_valid
+
+    if all_valid:
+        if not PRINT_ONLY_FAILS:
+            msg = f"'{name}' is KQMC valid\n" + msg
+        else:
+            msg = ""
+    else:
+        msg = f"'{name}' is not KQMC valid\n" + msg
+    
+    return msg
+
 def main():
-    global DEBUG
+    global DEBUG, PRINT_ONLY_FAILS
     args = parser.parse_args()
     # print(args)
     DEBUG = args.debug
     files = args.filename
-    print_only_on_failures = args.print_only_failures
+    PRINT_ONLY_FAILS = args.print_only_failures
 
     glob_str = args.glob
     if glob_str != "":
@@ -283,64 +338,16 @@ def main():
 
     for f in files:
         try:
-            file = open(f)
+            file = open(f, 'r', encoding='UTF-8')
             file_content = file.read()
-            lines = preprocess_file(file_content)
-            char_stats = parse_lines(lines)
-            all_valid = True
-            msg = ""
-            for char in char_stats.keys():
-                possible_mains = 0
-                try:
-                    possible_mains = guess_main_stats(char_stats[char])
-                except NotImplementedError:
-                    debug(f"Found 4* set on character {char}. Skipping this character. Please confirm manually")
-                    msg += f"\tFound 4* set on {char}. Skipping this character. Please confirm manually\n"
-                    continue
-                if len(possible_mains) == 0:
-                    debug(f"Did not find 5 possible main stats for {char}")
-                    msg += f"\tDid not find 5 possible main stats for {char}\n"
-                    all_valid = False
-                    continue
-                debug(
-                    f"For character {char} found possible main stats combinations: ")
-
-                char_is_valid = False
-                for guess in possible_mains:
-                    debug(f"\t{guess}")
-                    if char_is_valid:
-                        debug("\t\tSkipping because a valid KQMC main/substat distribution has been found already")
-                        continue
-                    try:
-                        subs = get_subs_from_guess(char_stats[char], guess)
-                        debug(f"\t\t{subs=}")
-                    except ValueError as e:
-                        debug(
-                            f"\t\tThis main stat guess was invalid: {e}")
-                        continue
-                    check, kqmc_msg = checkKQMC(guess, subs)
-                    char_is_valid = char_is_valid or check
-                    if not check:
-                        debug(f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
-
-                if not char_is_valid:
-                    debug(f"{char} isn't valid KQMC mains/substats")
-                    msg += f"\t{char} isn't valid KQMC mains/substats\n"
-                all_valid = all_valid and char_is_valid
-
-            if all_valid:
-                if not print_only_on_failures:
-                    name = os.path.basename(file.name)
-                    print(f"'{name}' is KQMC valid")
-                    if msg:
-                        print(msg)
-            else:
-                name = os.path.basename(file.name)
-                print(f"'{name}' is not KQMC valid")
-                if msg:
-                    print(msg)
+            msg = check_config(file_content, os.path.basename(file.name))
+            if msg:
+                print(msg)
         except FileNotFoundError as e:
-            print(e)
+            print(e, file=sys.stderr)
+        except Exception as e:
+            print(f"exception occured while processing {f}", file=sys.stderr)
+            print(e, file=sys.stderr)
         finally:
             file.close()
 

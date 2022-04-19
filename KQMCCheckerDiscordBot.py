@@ -2,6 +2,7 @@ import requests
 import base64
 import json
 import gzip
+import zlib
 import discord
 
 import os
@@ -16,7 +17,10 @@ def get_config_from_url(url:str):
         r= requests.get(url)
         raw_data:str = json.loads(r.content)['data']
         compressed = base64.b64decode(raw_data)
-        data = gzip.decompress(compressed)
+        try:
+            data = gzip.decompress(compressed)
+        except:
+            data = zlib.decompress(compressed)
         data = json.loads(data)
         return data['config_file']
     except Exception as e:
@@ -41,7 +45,7 @@ async def on_message(message):
             await message.channel.send("Expected gcsim viewer link")
             return
         url = split[1]
-        if not url.startswith("https://www.gcsim.app/viewer/share/"):
+        if not "gcsim.app/viewer/share" in url:
             await message.channel.send("Expected gcsim viewer link")
             return
         if url[-1] == "/":

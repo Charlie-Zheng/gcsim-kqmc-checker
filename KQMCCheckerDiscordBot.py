@@ -42,7 +42,7 @@ async def on_message(message):
         return
     content:str = message.content
     if content.lower().startswith("!verifykqmc") or content.lower().startswith("!submit"):
-        split = content.split(maxsplit=2)
+        split = content.split(maxsplit=3)
         if len(split) <= 1:
             await message.channel.send("Expected gcsim viewer link")
             return
@@ -62,5 +62,6 @@ async def on_message(message):
         if "is KQMC valid" in msg:
             kurt = await client.get_user_info('341979097414500377')
             await client.send(kurt, "<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
+            await client.send(kurt, split[2])
         return
 client.run(TOKEN)

@@ -7,7 +7,6 @@ import discord
 
 import os
 
-from discord.ext import commands
 from KQMCChecker import check_config
 
 

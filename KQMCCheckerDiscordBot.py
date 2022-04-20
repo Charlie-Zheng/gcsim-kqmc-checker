@@ -62,6 +62,6 @@ async def on_message(message):
         await message.channel.send(msg)
         if "is KQMC valid" in msg:
             kurt = await client.get_user_info('341979097414500377')
-            await client.send(kurt, url+"~"+message.author.name+"#"+message.author.discriminator+"~")
+            await client.send(kurt, "<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
         return
 client.run(TOKEN)

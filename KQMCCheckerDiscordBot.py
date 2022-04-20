@@ -7,6 +7,7 @@ import discord
 
 import os
 
+from discord.ext import commands
 from KQMCChecker import check_config
 
 
@@ -41,7 +42,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     content:str = message.content
-    if content.lower().startswith("!verifykqmc"):
+    if content.lower().startswith("!verifykqmc") or content.lower().startswith("!submit"):
         split = content.split(maxsplit=2)
         if len(split) <= 1:
             await message.channel.send("Expected gcsim viewer link")
@@ -59,5 +60,8 @@ async def on_message(message):
         name = os.path.basename(url)
         msg = check_config(config, name)
         await message.channel.send(msg)
+        if "is KQMC valid" in msg:
+            kurt = await client.get_user_info('341979097414500377')
+            await client.send(kurt, url+"~"+message.author.name+"#"+message.author.discriminator+"~")
         return
 client.run(TOKEN)

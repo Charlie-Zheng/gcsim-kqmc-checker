@@ -76,15 +76,17 @@ async def on_message(message):
             return
         name = os.path.basename(url)
         msg = check_config(config, name)
-        msg += "\nConfig is being sent to DB maintainer"
+        msg += "Config is being sent to DB maintainer"
         await message.channel.send(msg)
         if "is KQMC valid" in msg:
             kurt = await client.fetch_user(341979097414500377)
             if kurt is None:
                 await message.channel.send("Kurt was not found")
                 return
-            await kurt.send("<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
             if(len(split)>2):
-                await kurt.send(split[2])
+                await kurt.send(f"<{url}>~{message.author.name}#{message.author.discriminator}~\n{split[2]}")
+            else:
+                await kurt.send(f"<{url}>~{message.author.name}#{message.author.discriminator}~")
+            return
         return
 client.run(TOKEN)

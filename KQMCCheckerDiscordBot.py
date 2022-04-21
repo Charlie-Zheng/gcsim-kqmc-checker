@@ -12,9 +12,9 @@ from KQMCChecker import check_config
 
 def get_config_from_url(url:str):
     try:
-        url = url.replace("https://www.gcsim.app/viewer/share/", "https://viewer.gcsim.workers.dev/")
-        url = url.replace("https://gcsim.app/viewer/share/", "https://viewer.gcsim.workers.dev/")
-        if "https://viewer.gcsim.workers.dev/" in url:
+        if "gcsim.app/viewer/share" in url:
+            name = os.path.basename(url)
+            url = "https://viewer.gcsim.workers.dev/" + name
             r= requests.get(url)
             raw_data:str = json.loads(r.content)['data']
             compressed = base64.b64decode(raw_data)
@@ -41,7 +41,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     content:str = message.content
-    if content.lower().startswith("!verifykqmc"):
+    if content.lower().startswith("!kqmc"):
         split = content.split(maxsplit=2)
         if len(split) <= 1:
             await message.channel.send("Expected gcsim viewer link")

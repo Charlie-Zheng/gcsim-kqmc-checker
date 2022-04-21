@@ -41,7 +41,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     content:str = message.content
-    if content.lower().startswith("!verifykqmc"):
+    if content.lower().startswith("!kqmc"):
         split = content.split(maxsplit=2)
         if len(split) <= 1:
             await message.channel.send("Expected gcsim viewer link")

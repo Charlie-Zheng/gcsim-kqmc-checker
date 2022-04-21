@@ -1,0 +1,10 @@
+version: '3'
+services:
+        kqmc-bot:
+                build: .
+                command: python3 /usr/src/app/KQMCCheckerDiscordBot.py
+                volumes:
+                        - .:/usr/src/app
+                environment:
+                        - DISCORD_TOKEN
+                restart: always

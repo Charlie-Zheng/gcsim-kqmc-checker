@@ -12,9 +12,9 @@ from KQMCChecker import check_config
 
 def get_config_from_url(url:str):
     try:
-        url = url.replace("https://www.gcsim.app/viewer/share/", "https://viewer.gcsim.workers.dev/")
-        url = url.replace("https://gcsim.app/viewer/share/", "https://viewer.gcsim.workers.dev/")
-        if "https://viewer.gcsim.workers.dev/" in url:
+        if "gcsim.app/viewer/share" in url:
+            name = os.path.basename(url)
+            url = "https://viewer.gcsim.workers.dev/" + name
             r= requests.get(url)
             raw_data:str = json.loads(r.content)['data']
             compressed = base64.b64decode(raw_data)
@@ -30,7 +30,6 @@ def get_config_from_url(url:str):
         return None
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-
 client = discord.Client()
 @client.event
 async def on_ready():
@@ -60,4 +59,37 @@ async def on_message(message):
         msg = check_config(config, name)
         await message.channel.send(msg)
         return
+    if content.lower().startswith("!submit"):
+        split = content.split(maxsplit=2)
+        if len(split) <= 1:
+            await message.channel.send("Expected gcsim viewer link")
+            return
+        url = split[1]
+        if not "gcsim.app/viewer/share" in url:
+            await message.channel.send("Expected gcsim viewer link")
+            return
+        if url[-1] == "/":
+            url = url[:-1]
+        config = get_config_from_url(url)
+        if config is None:
+            await message.channel.send("gcsim viewer link was invalid")
+            return
+        name = os.path.basename(url)
+        msg = check_config(config, name)
+        
+        if "is KQMC valid" in msg:
+            msg += "Config was sent to DB maintainer"
+            await message.channel.send(msg)
+            kurt = await client.fetch_user(341979097414500377)
+            if kurt is None:
+                await message.channel.send("DB maintainer was not found")
+            else:
+                if(len(split)>2):
+                    await kurt.send(f"<{url}>~{message.author.name}#{message.author.discriminator}~\n{split[2]}")
+                else:
+                    await kurt.send(f"<{url}>~{message.author.name}#{message.author.discriminator}~")
+        else:
+            msg += "Config was not sent to DB maintainer"
+            await message.channel.send(msg)
+
 client.run(TOKEN)

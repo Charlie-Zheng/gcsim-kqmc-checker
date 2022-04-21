@@ -30,7 +30,6 @@ def get_config_from_url(url:str):
         return None
 
 TOKEN = os.getenv('DISCORD_TOKEN')
-
 client = discord.Client()
 @client.event
 async def on_ready():
@@ -61,7 +60,7 @@ async def on_message(message):
         await message.channel.send(msg)
         return
     if content.lower().startswith("!submit"):
-        split = content.split(maxsplit=3)
+        split = content.split(maxsplit=2)
         if len(split) <= 1:
             await message.channel.send("Expected gcsim viewer link")
             return
@@ -77,11 +76,15 @@ async def on_message(message):
             return
         name = os.path.basename(url)
         msg = check_config(config, name)
+        msg += "\nConfig is being sent to DB maintainer"
         await message.channel.send(msg)
         if "is KQMC valid" in msg:
-            kurt = await client.get_user_info('341979097414500377')
-            await client.send(kurt, "<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
+            kurt = await client.fetch_user(341979097414500377)
+            if kurt is None:
+                await message.channel.send("Kurt was not found")
+                return
+            await kurt.send("<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
             if(len(split)>2):
-                await client.send(kurt, split[2])
+                await kurt.send(split[2])
         return
 client.run(TOKEN)

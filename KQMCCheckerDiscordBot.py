@@ -60,4 +60,28 @@ async def on_message(message):
         msg = check_config(config, name)
         await message.channel.send(msg)
         return
+    if content.lower().startswith("!submit"):
+        split = content.split(maxsplit=3)
+        if len(split) <= 1:
+            await message.channel.send("Expected gcsim viewer link")
+            return
+        url = split[1]
+        if not "gcsim.app/viewer/share" in url:
+            await message.channel.send("Expected gcsim viewer link")
+            return
+        if url[-1] == "/":
+            url = url[:-1]
+        config = get_config_from_url(url)
+        if config is None:
+            await message.channel.send("gcsim viewer link was invalid")
+            return
+        name = os.path.basename(url)
+        msg = check_config(config, name)
+        await message.channel.send(msg)
+        if "is KQMC valid" in msg:
+            kurt = await client.get_user_info('341979097414500377')
+            await client.send(kurt, "<"+url+">~"+message.author.name+"#"+message.author.discriminator+"~")
+            if(len(split)>2):
+                await client.send(kurt, split[2])
+        return
 client.run(TOKEN)

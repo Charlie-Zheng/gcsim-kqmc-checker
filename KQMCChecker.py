@@ -1,6 +1,5 @@
 from enum import IntEnum
 import glob
-from multiprocessing.sharedctypes import Value
 import re
 import sys
 import argparse
@@ -155,7 +154,7 @@ def parse_lines(lines: List[str]):
     return char_stats
 
 
-four_star_arti_sets = {"instructor", "scholar", "exile"}
+four_star_arti_sets = {"instructor", "scholar", "theexile"}
 MAX_STAT_ERROR = 0.005
 
 

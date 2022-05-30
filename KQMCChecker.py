@@ -154,7 +154,7 @@ def parse_lines(lines: List[str]):
     return char_stats
 
 
-four_star_arti_sets = {"instructor", "scholar", "theexile"}
+four_star_arti_sets = {"instructor", "scholar", "theexile", "exile"}
 MAX_STAT_ERROR = 0.005
 
 

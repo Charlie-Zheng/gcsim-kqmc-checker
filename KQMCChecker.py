@@ -46,7 +46,7 @@ feather_stats = {s.atk}
 sands_stats = {s.er, s.em, s.atk_pcnt, s.defd_pcnt, s.hp_pcnt}
 hat_stats = {s.cr, s.cd, s.heal, s.em, s.atk_pcnt, s.defd_pcnt, s.hp_pcnt}
 goblet_stats = {s.pyro, s.cryo, s.hydro, s.electro, s.geo,
-                s.anemo, s.physical, s.em, s.atk_pcnt, s.defd_pcnt, s.hp_pcnt}
+                s.anemo, s.physical, s.dendro, s.em, s.atk_pcnt, s.defd_pcnt, s.hp_pcnt}
 
 
 max_sub_values = [None for _ in Stat]

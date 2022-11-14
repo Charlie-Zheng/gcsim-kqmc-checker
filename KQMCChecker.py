@@ -4,6 +4,7 @@ import re
 import sys
 import argparse
 import os
+import traceback
 from typing import List
 
 DEBUG = False
@@ -216,16 +217,18 @@ def get_subs_from_guess(char_stats: List, guess: List):
     for stat in Stat:
         if char_stats_copy[stat] != 0 and avg_sub_values[stat] == None:
             raise ValueError(
-                "Has leftover stats that cannot be filled by sub stats")
+                "'{stat}' has leftover stats that cannot be filled by sub stats")
         if avg_sub_values[stat] != None:
             sub_count = round(char_stats_copy[stat]/avg_sub_values[stat])
             calculated_stat_total = sub_count * \
                 avg_sub_values[stat] + ((mains[stat] * main_values[stat])
                                         if (mains[stat] != 0) else 0)
-
+            msg = f"Cannot find integer subs. "
+            err = False
             if not (calculated_stat_total * (1-MAX_STAT_ERROR) <= char_stats[stat] <= calculated_stat_total * (1+MAX_STAT_ERROR)):
-
-                msg = f"Cannot find integer subs to fill leftover within error. '{stat}' has {char_stats_copy[stat]/avg_sub_values[stat]} calculated subs"
+                msg += f"'{stat}' has {char_stats_copy[stat]/avg_sub_values[stat]:.3f} subs"
+                err = True
+            if err:
                 raise ValueError(msg)
             subs[stat] = sub_count
     return subs
@@ -248,7 +251,7 @@ def checkKQMC(mains, subs):
                     max_subs -= DISTRIBUTED_STATS_PER_NON_STAT_MAIN
 
             if not (min_subs <= subs[stat] <= max_subs):
-                return False , f"'{stat}' has {subs[stat]} substats but expected within the interval [{min_subs}, {max_subs}]"
+                return False , f"'{stat}' has {subs[stat]} substats but expected {min_subs} to {max_subs} subs"
     return True , ""
 
 
@@ -265,7 +268,6 @@ parser.add_argument('--debug', action='store_true', default=False, help='Print d
 parser.add_argument('--print-only-failures', action='store_true', default=False, help='Prints results only on failures')
 parser.add_argument('--kurt', action='store_true', default=False,
                     help='also check cons and weapon (not implemented yet)')
-
 def check_config(config:str, name="Unknown name"):
     lines = preprocess_file(config)
     char_stats = parse_lines(lines)
@@ -276,20 +278,22 @@ def check_config(config:str, name="Unknown name"):
         try:
             possible_mains = guess_main_stats(char_stats[char])
         except NotImplementedError:
-            debug(f"Found 4* set on character {char}. Skipping this character. Please confirm manually")
-            msg += f"\tFound 4* set on {char}. Skipping this character. Please confirm manually\n"
+            debug(f"{char} has 4* set. Skipping this character. Please confirm manually")
+            msg += f"\t{char} has 4* set. Skipping this character. Please confirm manually\n\n"
             continue
         if len(possible_mains) == 0:
-            debug(f"Did not find 5 possible main stats for {char}")
-            msg += f"\tDid not find 5 possible main stats for {char}\n"
+            debug(f"{char} does not have 5 possible main stats")
+            msg += f"\t{char} does not have 5 possible main stats\n\n"
             all_valid = False
             continue
         debug(
             f"For character {char} found possible main stats combinations: ")
-
+        err = ""
+        err_m = []
         char_is_valid = False
         for guess in possible_mains:
             debug(f"\t{guess}")
+            err_m.append(f"\t\t{guess}\n")
             if char_is_valid:
                 debug("\t\tSkipping because a valid KQMC main/substat distribution has been found already")
                 continue
@@ -298,16 +302,20 @@ def check_config(config:str, name="Unknown name"):
                 debug(f"\t\t{subs=}")
             except ValueError as e:
                 debug(
-                    f"\t\tThis main stat guess was invalid: {e}")
+                    f"\t\tThis main stat guess was invalid:\n {e}")
+                err_m[-1] += f"\t\t\t{e}"
                 continue
             check, kqmc_msg = checkKQMC(guess, subs)
             char_is_valid = char_is_valid or check
             if not check:
                 debug(f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
-
+                err_m = [err_m[-1] + f"\t\t\t{kqmc_msg}"]
+                break
         if not char_is_valid:
             debug(f"{char} isn't valid KQMC mains/substats")
             msg += f"\t{char} isn't valid KQMC mains/substats\n"
+            if not DEBUG:
+                msg += err + '\n'.join(err_m) + "\n\n"
         all_valid = all_valid and char_is_valid
 
     if all_valid:
@@ -347,6 +355,7 @@ def main():
         except Exception as e:
             print(f"exception occured while processing {f}", file=sys.stderr)
             print(e, file=sys.stderr)
+            traceback.print_exc()
         finally:
             file.close()
 

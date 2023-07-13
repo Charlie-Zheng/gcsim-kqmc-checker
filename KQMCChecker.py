@@ -9,6 +9,7 @@ from typing import List
 
 DEBUG = False
 
+
 class Stat(IntEnum):
     nothing = 0
     defd_pcnt = 1
@@ -38,6 +39,7 @@ class Stat(IntEnum):
 
     def __repr__(self):
         return self.name.replace("_pcnt", "%")
+
 
 s = Stat
 
@@ -118,11 +120,28 @@ set_regex = re.compile(
 
 PRINT_ONLY_FAILS = False
 
+
 def preprocess_file(file_content: str):
     file_content, _ = re.subn(comment_regex, "", file_content)
     file_content.replace(";", ";\n")
     lines = [x.strip() for x in file_content.splitlines()]
     return lines
+
+
+def parse_json(jason: dict):
+    char_stats = dict()
+    for char_det in jason["character_details"]:
+        char_name = char_det["name"]
+        char_stats[char_name] = [0 for _ in Stat]
+        char_stats[char_name].append([])
+        if "stats" in char_det.keys():
+            for i in range(len(char_det["stats"])):
+                char_stats[char_name][i] = char_det["stats"][i]
+        if "sets" in char_det.keys():
+            for set_name, set_num in char_det["sets"].items():
+                set_num = set_num // 2 * 2
+                char_stats[char_name][-1].append((set_name, set_num))
+    return char_stats
 
 
 def parse_lines(lines: List[str]):
@@ -217,7 +236,7 @@ def get_subs_from_guess(char_stats: List, guess: List):
     for stat in Stat:
         if char_stats_copy[stat] != 0 and avg_sub_values[stat] == None:
             raise ValueError(
-                "'{stat}' has leftover stats that cannot be filled by sub stats")
+                f"'{stat}' has leftover stats that cannot be filled by sub stats")
         if avg_sub_values[stat] != None:
             sub_count = round(char_stats_copy[stat]/avg_sub_values[stat])
             calculated_stat_total = sub_count * \
@@ -238,39 +257,10 @@ ALLOCATED_SUBS_PER_STAT = 2
 DISTRIBUTED_STATS_PER_NON_STAT_MAIN = 2
 MAX_SUBS_TOTAL = 40
 
-def checkKQMC(mains, subs):
-    mains = mains.copy()
-    if sum(subs) != MAX_SUBS_TOTAL:
-        return False , f"Total sub count is {sum(subs)} but expected {MAX_SUBS_TOTAL}"
-    for stat in Stat:
-        if avg_sub_values[stat] != None:
-            min_subs = ALLOCATED_SUBS_PER_STAT
-            max_subs = ALLOCATED_SUBS_PER_STAT + DISTRIBUTED_STATS_PER_NON_STAT_MAIN * 5
-            for main in mains:
-                if stat == main:
-                    max_subs -= DISTRIBUTED_STATS_PER_NON_STAT_MAIN
 
-            if not (min_subs <= subs[stat] <= max_subs):
-                return False , f"'{stat}' has {subs[stat]} substats but expected {min_subs} to {max_subs} subs"
-    return True , ""
-
-
-def debug(*args):
-    if DEBUG:
-        print(*args)
-
-parser = argparse.ArgumentParser()
-parser.add_argument('filename', nargs='*', metavar='filename', type=str,
-                    default=[], help='the filename of the config to check')
-parser.add_argument('--glob', action='store', metavar='glob', type=str,
-                    default="", help='Directories of files')
-parser.add_argument('--debug', action='store_true', default=False, help='Print debug info')
-parser.add_argument('--print-only-failures', action='store_true', default=False, help='Prints results only on failures')
-parser.add_argument('--kurt', action='store_true', default=False,
-                    help='also check cons and weapon (not implemented yet)')
-def check_config(config:str, name="Unknown name"):
-    lines = preprocess_file(config)
-    char_stats = parse_lines(lines)
+def check_json(jason: str, name="Unknown name"):
+    char_stats = parse_json(jason)
+    # print(f"{char_stats=}")
     all_valid = True
     msg = ""
     for char in char_stats.keys():
@@ -278,7 +268,8 @@ def check_config(config:str, name="Unknown name"):
         try:
             possible_mains = guess_main_stats(char_stats[char])
         except NotImplementedError:
-            debug(f"{char} has 4* set. Skipping this character. Please confirm manually")
+            debug(
+                f"{char} has 4* set. Skipping this character. Please confirm manually")
             msg += f"\t{char} has 4* set. Skipping this character. Please confirm manually\n\n"
             continue
         if len(possible_mains) == 0:
@@ -295,7 +286,8 @@ def check_config(config:str, name="Unknown name"):
             debug(f"\t{guess}")
             err_m.append(f"\t\t{guess}\n")
             if char_is_valid:
-                debug("\t\tSkipping because a valid KQMC main/substat distribution has been found already")
+                debug(
+                    "\t\tSkipping because a valid KQMC main/substat distribution has been found already")
                 continue
             try:
                 subs = get_subs_from_guess(char_stats[char], guess)
@@ -308,7 +300,8 @@ def check_config(config:str, name="Unknown name"):
             check, kqmc_msg = checkKQMC(guess, subs)
             char_is_valid = char_is_valid or check
             if not check:
-                debug(f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
+                debug(
+                    f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
                 err_m = [err_m[-1] + f"\t\t\t{kqmc_msg}"]
                 break
         if not char_is_valid:
@@ -325,8 +318,108 @@ def check_config(config:str, name="Unknown name"):
             msg = ""
     else:
         msg = f"'{name}' is not KQMC valid\n" + msg
-    
+
     return msg
+
+
+def checkKQMC(mains, subs):
+    mains = mains.copy()
+    if sum(subs) != MAX_SUBS_TOTAL:
+        return False, f"Total sub count is {sum(subs)} but expected {MAX_SUBS_TOTAL}"
+    for stat in Stat:
+        if avg_sub_values[stat] != None:
+            min_subs = ALLOCATED_SUBS_PER_STAT
+            max_subs = ALLOCATED_SUBS_PER_STAT + DISTRIBUTED_STATS_PER_NON_STAT_MAIN * 5
+            for main in mains:
+                if stat == main:
+                    max_subs -= DISTRIBUTED_STATS_PER_NON_STAT_MAIN
+
+            if not (min_subs <= subs[stat] <= max_subs):
+                return False, f"'{stat}' has {subs[stat]} substats but expected {min_subs} to {max_subs} subs"
+    return True, ""
+
+
+def debug(*args):
+    if DEBUG:
+        print(*args)
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument('filename', nargs='*', metavar='filename', type=str,
+                    default=[], help='the filename of the config to check')
+parser.add_argument('--glob', action='store', metavar='glob', type=str,
+                    default="", help='Directories of files')
+parser.add_argument('--debug', action='store_true',
+                    default=False, help='Print debug info')
+parser.add_argument('--print-only-failures', action='store_true',
+                    default=False, help='Prints results only on failures')
+parser.add_argument('--kurt', action='store_true', default=False,
+                    help='also check cons and weapon (not implemented yet)')
+
+
+def check_config(config: str, name="Unknown name"):
+    lines = preprocess_file(config)
+    char_stats = parse_lines(lines)
+    all_valid = True
+    msg = ""
+    for char in char_stats.keys():
+        possible_mains = 0
+        try:
+            possible_mains = guess_main_stats(char_stats[char])
+        except NotImplementedError:
+            debug(
+                f"{char} has 4* set. Skipping this character. Please confirm manually")
+            msg += f"\t{char} has 4* set. Skipping this character. Please confirm manually\n\n"
+            continue
+        if len(possible_mains) == 0:
+            debug(f"{char} does not have 5 possible main stats")
+            msg += f"\t{char} does not have 5 possible main stats\n\n"
+            all_valid = False
+            continue
+        debug(
+            f"For character {char} found possible main stats combinations: ")
+        err = ""
+        err_m = []
+        char_is_valid = False
+        for guess in possible_mains:
+            debug(f"\t{guess}")
+            err_m.append(f"\t\t{guess}\n")
+            if char_is_valid:
+                debug(
+                    "\t\tSkipping because a valid KQMC main/substat distribution has been found already")
+                continue
+            try:
+                subs = get_subs_from_guess(char_stats[char], guess)
+                debug(f"\t\t{subs=}")
+            except ValueError as e:
+                debug(
+                    f"\t\tThis main stat guess was invalid:\n {e}")
+                err_m[-1] += f"\t\t\t{e}"
+                continue
+            check, kqmc_msg = checkKQMC(guess, subs)
+            char_is_valid = char_is_valid or check
+            if not check:
+                debug(
+                    f"\t\tThis main stat guess was invalid due to failing KQMC substat check: {kqmc_msg}")
+                err_m = [err_m[-1] + f"\t\t\t{kqmc_msg}"]
+                break
+        if not char_is_valid:
+            debug(f"{char} isn't valid KQMC mains/substats")
+            msg += f"\t{char} isn't valid KQMC mains/substats\n"
+            if not DEBUG:
+                msg += err + '\n'.join(err_m) + "\n\n"
+        all_valid = all_valid and char_is_valid
+
+    if all_valid:
+        if not PRINT_ONLY_FAILS:
+            msg = f"'{name}' is KQMC valid\n" + msg
+        else:
+            msg = ""
+    else:
+        msg = f"'{name}' is not KQMC valid\n" + msg
+
+    return msg
+
 
 def main():
     global DEBUG, PRINT_ONLY_FAILS
@@ -358,5 +451,6 @@ def main():
             traceback.print_exc()
         finally:
             file.close()
+
 
 main()

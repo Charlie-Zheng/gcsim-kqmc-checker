@@ -29,8 +29,8 @@ class Stat(IntEnum):
     electro = 15
     anemo = 16
     geo = 17
-    physical = 18
-    dendro = 19
+    dendro = 18
+    physical = 19
     atkspd = 20
     dmg = 21
 
@@ -260,7 +260,7 @@ MAX_SUBS_TOTAL = 40
 
 def check_json(jason: str, name="Unknown name"):
     char_stats = parse_json(jason)
-    # print(f"{char_stats=}")
+    print(f"{char_stats=}")
     all_valid = True
     msg = ""
     for char in char_stats.keys():

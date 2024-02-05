@@ -33,6 +33,10 @@ class Stat(IntEnum):
     physical = 19
     atkspd = 20
     dmg = 21
+    delim_base_stat = 22
+    baseHP = 23
+    baseATK = 24
+    baseDef = 25
 
     def __str__(self):
         return self.name.replace("_pcnt", "%")
@@ -260,7 +264,6 @@ MAX_SUBS_TOTAL = 40
 
 def check_json(jason: str, name="Unknown name"):
     char_stats = parse_json(jason)
-    print(f"{char_stats=}")
     all_valid = True
     msg = ""
     for char in char_stats.keys():

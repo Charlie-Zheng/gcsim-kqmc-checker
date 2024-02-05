@@ -40,7 +40,6 @@ async def on_message(message):
     if message.author == client.user:
         return
     content: str = message.content
-    print(content)
     if content.lower().startswith("!kqmc"):
         split = content.split(maxsplit=2)
         if len(split) <= 1:

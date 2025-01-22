@@ -1,23 +1,21 @@
 import requests
-import base64
 import json
-import gzip
-import zlib
 import discord
 
 import os
 
 from KQMCChecker import check_json
-from TotalStats import get_stats
 
 
 def get_json_from_url(url: str):
     try:
         if "gcsim.app/sh/" in url or "gcsim.app/db/" in url:
             name = os.path.basename(url)
-            url = "https://gcsim.app/api/share/" + \
-                ("db/" if "gcsim.app/db/" in url else "") + name
-            r = requests.get(url)
+            new_url = "https://gcsim.app/api/share/"
+            new_url += ("db/" if "gcsim.app/db/" in url else "")
+            new_url += name
+            print(new_url)
+            r = requests.get(new_url)
             data: str = json.loads(r.text)
             return data
         return None
@@ -26,7 +24,6 @@ def get_json_from_url(url: str):
         return None
 
 
-TOKEN = os.getenv('DISCORD_TOKEN')
 client = discord.Client(intents=discord.Intents.default())
 
 
@@ -60,4 +57,5 @@ async def on_message(message):
         await message.channel.send(msg)
         return
 
+TOKEN = os.getenv('DISCORD_TOKEN')
 client.run(TOKEN)

@@ -1,6 +1,6 @@
 ---
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: main branch push release
+name: master branch push release
 
 concurrency:
   group: container-release
@@ -9,7 +9,7 @@ concurrency:
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-images:

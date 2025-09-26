@@ -13,11 +13,11 @@ from Stats import Stat, main_values, avg_sub_values, flower_stats, feather_stats
 
 DEBUG = False
 
-comment_regex = re.compile("#.*$", re.MULTILINE)
-add_stats_regex = re.compile("([a-zA-Z]+) +add +stats +")
-stat_regex = re.compile("([a-zA-Z%]+) *= *(\d*\.?\d*)")
+comment_regex = re.compile(r"#.*$", re.MULTILINE)
+add_stats_regex = re.compile(r"([a-zA-Z]+) +add +stats +")
+stat_regex = re.compile(r"([a-zA-Z%]+) *= *(\d*\.?\d*)")
 set_regex = re.compile(
-    '([a-zA-Z]+) +add +set *= *"([a-zA-Z]*)" +count *= *(\d+)')
+    r'([a-zA-Z]+) +add +set *= *"([a-zA-Z]*)" +count *= *(\d+)')
 
 PRINT_ONLY_FAILS = False
 ALLOCATED_SUBS_PER_STAT = 2

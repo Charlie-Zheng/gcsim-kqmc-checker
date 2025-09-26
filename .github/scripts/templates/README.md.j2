@@ -1,0 +1,21 @@
+<!---
+NOTE: AUTO-GENERATED FILE
+to edit this file, instead edit its template at: ./github/scripts/templates/README.md.j2
+-->
+<div align="center">
+## Containers
+</div>
+
+## Available Images
+
+Each Image will be built with a `rolling` tag, along with tags specific to it's version. Available Images Below
+
+Container | Channel | Image
+--- | --- | ---
+{% for image in app_images | sort(attribute="name") -%}
+[{{ image.name }}]({{ image.html_url }}) | {{ image.channel }} | ghcr.io/{{ image.owner }}/{{ image.name }}
+{% endfor %}
+
+## Credits
+
+This build script is based on the hard work of [onedr0p](https://github.com/onedr0p) and [joryirving](https://github.com/joryirving).

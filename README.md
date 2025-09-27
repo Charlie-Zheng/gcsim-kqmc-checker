@@ -36,14 +36,14 @@ Then, run `python .\KQMCCheckerDiscordBot.py` to start the bot.
 
 ### Interacting with the Discord Bot:
 
-Message the Bot with a message with the format:
+Use the /kqmc slash command with the gcsim share link:
 ```
-!kqmc https://gcsim.app/sh/MW7dPmpt9WPt
+/kqmc link: https://gcsim.app/db/BQMzFRgR98Tm
 ```
 
 and the bot will respond
 
 ```
-'MW7dPmpt9WPt' is KQMC valid
+https://gcsim.app/db/BQMzFRgR98Tm is KQMC valid
 ```
 

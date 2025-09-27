@@ -212,11 +212,11 @@ def check_json(jason: str, name="Unknown name"):
 
     if all_valid:
         if not PRINT_ONLY_FAILS:
-            msg = f"'{name}' is KQMC valid\n" + msg
+            msg = f"{name} is KQMC valid\n" + msg
         else:
             msg = ""
     else:
-        msg = f"'{name}' is not KQMC valid\n" + msg
+        msg = f"{name} is not KQMC valid\n" + msg
 
     return msg
 
